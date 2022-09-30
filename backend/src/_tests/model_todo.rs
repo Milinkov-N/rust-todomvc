@@ -1,17 +1,19 @@
 use super::{TodoMac, TodoPatch, TodoStatus};
 use crate::model::db::init_db;
+use crate::security::utx_from_token;
 
 #[tokio::test]
 async fn model_todo_create() -> Result<(), Box<dyn std::error::Error>> {
     // -- FIXTRUE
     let db = init_db().await?;
+    let utx = utx_from_token("123").await?;
     let data_fx = TodoPatch {
         title: Some("test - model_todo_create 1".to_string()),
         ..Default::default()
     };
 
     // -- ACTION
-    let todo_created = TodoMac::create(&db, data_fx.clone()).await?;
+    let todo_created = TodoMac::create(&db, &utx, data_fx.clone()).await?;
 
     // -- CHECK
     assert!(todo_created.id >= 1000, "id should be >= 1000");
@@ -24,21 +26,22 @@ async fn model_todo_create() -> Result<(), Box<dyn std::error::Error>> {
 async fn model_todo_list() -> Result<(), Box<dyn std::error::Error>> {
     // -- FIXTURE
     let db = init_db().await?;
+    let utx = utx_from_token("123").await?;
 
     // -- ACTION
-    let todos = TodoMac::list(&db).await?;
+    let todos = TodoMac::list(&db, &utx).await?;
 
     // -- CHECK
     assert_eq!(2, todos.len());
 
-    // todo 101
-    assert_eq!(101, todos[0].id);
+    // todo 100
+    assert_eq!(100, todos[0].id);
     assert_eq!(123, todos[0].cid);
-    assert_eq!("todo 101", todos[0].title);
+    assert_eq!("todo 100", todos[0].title);
 
     // todo 101
-    assert_eq!(101, todos[0].id);
-    assert_eq!(123, todos[0].cid);
-    assert_eq!("todo 101", todos[0].title);
+    assert_eq!(101, todos[1].id);
+    assert_eq!(123, todos[1].cid);
+    assert_eq!("todo 101", todos[1].title);
     Ok(())
 }
